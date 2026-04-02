@@ -111,7 +111,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               exit={{ x: -280 }}
-              className="fixed inset-y-0 left-0 w-72 bg-card border-r border-border z-50 p-8 md:hidden"
+              className={cn(
+                "fixed inset-y-0 left-0 w-72 border-r z-50 p-8 md:hidden transition-colors duration-300",
+                isDarkMode 
+                  ? "bg-[#0a0a0a] text-white border-zinc-800" 
+                  : "bg-white text-slate-900 border-slate-200"
+              )}
             >
               <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-3">
@@ -120,7 +125,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
                   </div>
                   <h1 className="text-xl font-bold tracking-tight font-display">FinVision</h1>
                 </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-accent rounded-lg">
+                <button 
+                  onClick={() => setIsSidebarOpen(false)} 
+                  className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    isDarkMode ? "hover:bg-zinc-800 text-slate-400" : "hover:bg-slate-200 text-slate-500"
+                  )}
+                >
                   <X size={24} />
                 </button>
               </div>
@@ -137,7 +148,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
                       "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all",
                       activeTab === item.id 
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                        : "hover:bg-accent text-muted-foreground"
+                        : (isDarkMode ? "hover:bg-zinc-800 text-slate-400 hover:text-white" : "hover:bg-slate-100 text-slate-500 hover:text-slate-900")
                     )}
                   >
                     <item.icon size={20} />
