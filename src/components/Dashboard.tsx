@@ -26,10 +26,12 @@ import {
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { motion } from 'motion/react';
 import { cn } from '../utils/cn';
+import TransactionModal from './TransactionModal';
 
 const Dashboard: React.FC = () => {
   const { transactions, role } = useFinance();
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -146,7 +148,10 @@ const Dashboard: React.FC = () => {
           <p className="text-muted-foreground mt-1">Welcome back, Sejal. Here's your real-time financial performance.</p>
         </div>
         {role === 'admin' && (
-          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
+          >
             <Plus size={20} strokeWidth={3} />
             New Transaction
           </button>
@@ -370,6 +375,11 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
       </div>
+      
+      <TransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 };
