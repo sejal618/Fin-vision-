@@ -7,7 +7,11 @@ import {
   ArrowDownRight,
   Plus,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Edit2,
+  Trash2,
+  Filter,
+  ArrowUpDown
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { 
@@ -48,34 +52,68 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
-  const { transactions, role } = useFinance();
+  const { transactions, role, deleteTransaction } = useFinance();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   
   // Date Filter State
   const [dateRangeType, setDateRangeType] = useState<'all' | 'month' | 'year' | 'custom'>('all');
   const [customStartDate, setCustomStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const categories = useMemo(() => {
+    const cats = new Set(transactions.map(t => t.category));
+    return ['all', ...Array.from(cats)].sort();
+  }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
     const now = new Date();
-    return transactions.filter(t => {
+    let filtered = transactions.filter(t => {
+      // Date Filtering
       const txDate = parseISO(t.date);
+      let dateMatch = true;
       if (dateRangeType === 'month') {
-        return isSameMonth(txDate, now);
-      }
-      if (dateRangeType === 'year') {
-        return isSameYear(txDate, now);
-      }
-      if (dateRangeType === 'custom') {
-        return isWithinInterval(txDate, {
+        dateMatch = isSameMonth(txDate, now);
+      } else if (dateRangeType === 'year') {
+        dateMatch = isSameYear(txDate, now);
+      } else if (dateRangeType === 'custom') {
+        dateMatch = isWithinInterval(txDate, {
           start: startOfDay(parseISO(customStartDate)),
           end: endOfDay(parseISO(customEndDate))
         });
       }
-      return true;
+
+      // Category Filtering
+      const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
+
+      return dateMatch && categoryMatch;
     });
-  }, [transactions, dateRangeType, customStartDate, customEndDate]);
+
+    // Sorting
+    return filtered.sort((a, b) => {
+      if (sortBy === 'date') {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      } else {
+        return sortOrder === 'desc' ? b.amount - a.amount : a.amount - b.amount;
+      }
+    });
+  }, [transactions, dateRangeType, customStartDate, customEndDate, selectedCategory, sortBy, sortOrder]);
+
+  const handleEdit = (tx: any) => {
+    setSelectedTransaction(tx);
+    setIsModalOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedTransaction(null);
+    setIsModalOpen(true);
+  };
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -178,8 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
     
     return Object.entries(categories)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+      .sort((a, b) => b.value - a.value);
   }, [filteredTransactions]);
 
   const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -192,55 +229,90 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
           <p className="text-muted-foreground mt-1">Welcome back, Sejal. Here's your real-time financial performance.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-card/40 backdrop-blur-md border border-border/50 p-1 sm:p-1.5 rounded-2xl shadow-soft w-full sm:w-auto overflow-x-auto sm:overflow-visible no-scrollbar">
-            <button 
-              onClick={() => setDateRangeType('all')}
-              className={cn(
-                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                dateRangeType === 'all' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
-              )}
-            >
-              All Time
-            </button>
-            <button 
-              onClick={() => setDateRangeType('month')}
-              className={cn(
-                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                dateRangeType === 'month' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
-              )}
-            >
-              Monthly
-            </button>
-            <button 
-              onClick={() => setDateRangeType('year')}
-              className={cn(
-                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                dateRangeType === 'year' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
-              )}
-            >
-              Yearly
-            </button>
-            <button 
-              onClick={() => setDateRangeType('custom')}
-              className={cn(
-                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
-                dateRangeType === 'custom' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
-              )}
-            >
-              <Calendar size={12} className="shrink-0" />
-              Custom
-            </button>
-          </div>
-
           {role === 'admin' && (
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleAdd}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
             >
               <Plus size={20} strokeWidth={3} />
               New Transaction
             </button>
           )}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-card/40 backdrop-blur-md border border-border/50 p-1 sm:p-1.5 rounded-2xl shadow-soft w-full sm:w-auto overflow-x-auto sm:overflow-visible no-scrollbar">
+          <button 
+            onClick={() => setDateRangeType('all')}
+            className={cn(
+              "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+              dateRangeType === 'all' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+            )}
+          >
+            All Time
+          </button>
+          <button 
+            onClick={() => setDateRangeType('month')}
+            className={cn(
+              "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+              dateRangeType === 'month' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+            )}
+          >
+            Monthly
+          </button>
+          <button 
+            onClick={() => setDateRangeType('year')}
+            className={cn(
+              "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+              dateRangeType === 'year' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+            )}
+          >
+            Yearly
+          </button>
+          <button 
+            onClick={() => setDateRangeType('custom')}
+            className={cn(
+              "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+              dateRangeType === 'custom' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+            )}
+          >
+            <Calendar size={12} className="shrink-0" />
+            Custom
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-2 bg-card/40 backdrop-blur-md border border-border/50 px-3 py-2 rounded-2xl shadow-soft flex-1 lg:flex-none">
+            <Filter size={14} className="text-muted-foreground" />
+            <select 
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat} className="bg-background">{cat === 'all' ? 'All Categories' : cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-card/40 backdrop-blur-md border border-border/50 px-3 py-2 rounded-2xl shadow-soft flex-1 lg:flex-none">
+            <ArrowUpDown size={14} className="text-muted-foreground" />
+            <select 
+              value={`${sortBy}-${sortOrder}`}
+              onChange={(e) => {
+                const [newSortBy, newSortOrder] = e.target.value.split('-') as [any, any];
+                setSortBy(newSortBy);
+                setSortOrder(newSortOrder);
+              }}
+              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
+            >
+              <option value="date-desc" className="bg-background">Newest First</option>
+              <option value="date-asc" className="bg-background">Oldest First</option>
+              <option value="amount-desc" className="bg-background">Highest Amount</option>
+              <option value="amount-asc" className="bg-background">Lowest Amount</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -318,7 +390,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft">
+        <div className="lg:col-span-2 bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft focus:outline-none outline-none">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl font-bold">Balance Analytics</h3>
@@ -392,10 +464,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
           </div>
         </div>
 
-        <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft flex flex-col">
-          <div className="mb-8">
-            <h3 className="text-xl font-bold">Category Distribution</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Spending by category</p>
+        <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft flex flex-col focus:outline-none outline-none">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-bold">Category Distribution</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Spending by category</p>
+            </div>
+            <select className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border-none focus:ring-2 ring-primary/20 transition-all cursor-pointer outline-none">
+              <option>Last 6 Months</option>
+              <option>Last Year</option>
+              <option>All Time</option>
+            </select>
           </div>
           <div className="h-[320px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -423,7 +502,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total</span>
-              <span className="text-2xl font-black">${stats.expenses.toLocaleString()}</span>
+              <span className={cn(
+                "font-black tracking-tighter",
+                stats.expenses >= 1000000 ? "text-lg" : "text-2xl"
+              )}>
+                ${stats.expenses >= 1000000 
+                  ? `${(stats.expenses / 1000000).toFixed(2)}M` 
+                  : stats.expenses.toLocaleString()}
+              </span>
             </div>
           </div>
           <div className="space-y-4 mt-8 flex-1 overflow-y-auto pr-2">
@@ -465,10 +551,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
                 <th className="px-8 py-4">Category</th>
                 <th className="px-8 py-4">Date</th>
                 <th className="px-8 py-4 text-right">Amount</th>
+                {role === 'admin' && <th className="px-8 py-4 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {transactions.slice(0, 5).map((tx) => (
+              {filteredTransactions.slice(0, 5).map((tx) => (
                 <tr key={tx.id} className="hover:bg-accent/30 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
@@ -496,6 +583,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
                   )}>
                     {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
                   </td>
+                  {role === 'admin' && (
+                    <td className="px-8 py-5 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                        <button 
+                          onClick={() => handleEdit(tx)}
+                          className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                          title="Edit Transaction"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => deleteTransaction(tx.id)}
+                          className="p-2 rounded-lg hover:bg-danger/10 text-danger transition-colors"
+                          title="Delete Transaction"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -505,7 +612,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
       
       <TransactionModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTransaction(null);
+        }} 
+        transaction={selectedTransaction}
       />
     </div>
   );
