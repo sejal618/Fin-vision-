@@ -16,13 +16,13 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onViewAll={() => setActiveTab('transactions')} />;
       case 'transactions':
         return <Transactions />;
       case 'insights':
         return <Insights />;
       default:
-        return <Dashboard />;
+        return <Dashboard onViewAll={() => setActiveTab('transactions')} />;
     }
   };
 

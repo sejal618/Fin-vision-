@@ -5,7 +5,9 @@ import {
   Wallet, 
   ArrowUpRight, 
   ArrowDownRight,
-  Plus
+  Plus,
+  Calendar,
+  ChevronDown
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { 
@@ -23,15 +25,57 @@ import {
   Bar,
   Sector
 } from 'recharts';
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
-import { motion } from 'motion/react';
+import { 
+  format, 
+  subMonths, 
+  startOfMonth, 
+  endOfMonth, 
+  isWithinInterval, 
+  parseISO, 
+  startOfYear, 
+  endOfYear,
+  isSameMonth,
+  isSameYear,
+  startOfDay,
+  endOfDay
+} from 'date-fns';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils/cn';
 import TransactionModal from './TransactionModal';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onViewAll?: () => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
   const { transactions, role } = useFinance();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Date Filter State
+  const [dateRangeType, setDateRangeType] = useState<'all' | 'month' | 'year' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    return transactions.filter(t => {
+      const txDate = parseISO(t.date);
+      if (dateRangeType === 'month') {
+        return isSameMonth(txDate, now);
+      }
+      if (dateRangeType === 'year') {
+        return isSameYear(txDate, now);
+      }
+      if (dateRangeType === 'custom') {
+        return isWithinInterval(txDate, {
+          start: startOfDay(parseISO(customStartDate)),
+          end: endOfDay(parseISO(customEndDate))
+        });
+      }
+      return true;
+    });
+  }, [transactions, dateRangeType, customStartDate, customEndDate]);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -79,11 +123,11 @@ const Dashboard: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const totalIncome = transactions
+    const totalIncome = filteredTransactions
       .filter(t => t.type === 'income')
       .reduce((acc, t) => acc + t.amount, 0);
     
-    const totalExpenses = transactions
+    const totalExpenses = filteredTransactions
       .filter(t => t.type === 'expense')
       .reduce((acc, t) => acc + t.amount, 0);
     
@@ -93,7 +137,7 @@ const Dashboard: React.FC = () => {
       expenses: totalExpenses,
       savingsRate: totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0
     };
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const trendData = useMemo(() => {
     const last6Months = Array.from({ length: 6 }).map((_, i) => {
@@ -126,7 +170,7 @@ const Dashboard: React.FC = () => {
 
   const categoryData = useMemo(() => {
     const categories: Record<string, number> = {};
-    transactions
+    filteredTransactions
       .filter(t => t.type === 'expense')
       .forEach(t => {
         categories[t.category] = (categories[t.category] || 0) + t.amount;
@@ -136,27 +180,105 @@ const Dashboard: React.FC = () => {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 md:space-y-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Financial Intelligence</h2>
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Financial Intelligence</h2>
           <p className="text-muted-foreground mt-1">Welcome back, Sejal. Here's your real-time financial performance.</p>
         </div>
-        {role === 'admin' && (
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
-          >
-            <Plus size={20} strokeWidth={3} />
-            New Transaction
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 bg-card/40 backdrop-blur-md border border-border/50 p-1 sm:p-1.5 rounded-2xl shadow-soft w-full sm:w-auto overflow-x-auto sm:overflow-visible no-scrollbar">
+            <button 
+              onClick={() => setDateRangeType('all')}
+              className={cn(
+                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                dateRangeType === 'all' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+              )}
+            >
+              All Time
+            </button>
+            <button 
+              onClick={() => setDateRangeType('month')}
+              className={cn(
+                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                dateRangeType === 'month' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+              )}
+            >
+              Monthly
+            </button>
+            <button 
+              onClick={() => setDateRangeType('year')}
+              className={cn(
+                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                dateRangeType === 'year' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+              )}
+            >
+              Yearly
+            </button>
+            <button 
+              onClick={() => setDateRangeType('custom')}
+              className={cn(
+                "flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+                dateRangeType === 'custom' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-accent/50"
+              )}
+            >
+              <Calendar size={12} className="shrink-0" />
+              Custom
+            </button>
+          </div>
+
+          {role === 'admin' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
+            >
+              <Plus size={20} strokeWidth={3} />
+              New Transaction
+            </button>
+          )}
+        </div>
       </div>
+
+      <AnimatePresence>
+        {dateRangeType === 'custom' && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-6 shadow-soft flex flex-wrap items-center gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Start Date</label>
+                <input 
+                  type="date" 
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="bg-accent/30 border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 ring-primary/20 transition-all outline-none"
+                />
+              </div>
+              <div className="w-4 h-px bg-border mt-6" />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">End Date</label>
+                <input 
+                  type="date" 
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="bg-accent/30 border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 ring-primary/20 transition-all outline-none"
+                />
+              </div>
+              <div className="ml-auto text-xs text-muted-foreground font-medium italic">
+                Showing data from {format(parseISO(customStartDate), 'MMM dd')} to {format(parseISO(customEndDate), 'MMM dd, yyyy')}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -328,7 +450,12 @@ const Dashboard: React.FC = () => {
             <h3 className="text-xl font-bold">Recent Transactions</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Your latest financial activities</p>
           </div>
-          <button className="text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 px-4 py-2 rounded-xl transition-all">View All Activity</button>
+          <button 
+            onClick={onViewAll}
+            className="text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 px-4 py-2 rounded-xl transition-all"
+          >
+            View All Activity
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">

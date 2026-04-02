@@ -187,7 +187,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-10 scroll-smooth">
+        <div className="flex-1 overflow-y-auto pt-4 px-6 pb-6 md:pt-6 md:px-10 md:pb-10 scroll-smooth">
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 20 }}

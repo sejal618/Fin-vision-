@@ -13,20 +13,29 @@ interface TransactionModalProps {
 
 const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, transaction }) => {
   const { addTransaction, updateTransaction, isDarkMode } = useFinance();
+  const categories = [
+    'Food & Dining', 'Shopping', 'Housing', 'Transportation', 
+    'Entertainment', 'Salary', 'Freelance', 'Investments', 
+    'Utilities', 'Healthcare', 'Other'
+  ];
+
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     category: 'Food & Dining',
+    customCategory: '',
     type: 'expense' as 'income' | 'expense',
     date: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
     if (transaction) {
+      const isPredefined = categories.includes(transaction.category) && transaction.category !== 'Other';
       setFormData({
         description: transaction.description,
         amount: transaction.amount.toString(),
-        category: transaction.category,
+        category: isPredefined ? transaction.category : 'Other',
+        customCategory: isPredefined ? '' : transaction.category,
         type: transaction.type,
         date: transaction.date
       });
@@ -35,6 +44,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, tr
         description: '',
         amount: '',
         category: 'Food & Dining',
+        customCategory: '',
         type: 'expense',
         date: new Date().toISOString().split('T')[0]
       });
@@ -43,9 +53,17 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, tr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const finalCategory = formData.category === 'Other' 
+      ? (formData.customCategory.trim() || 'Other') 
+      : formData.category;
+
     const data = {
-      ...formData,
-      amount: parseFloat(formData.amount)
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      category: finalCategory,
+      type: formData.type,
+      date: formData.date
     };
 
     if (transaction) {
@@ -55,12 +73,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, tr
     }
     onClose();
   };
-
-  const categories = [
-    'Food & Dining', 'Shopping', 'Housing', 'Transportation', 
-    'Entertainment', 'Salary', 'Freelance', 'Investments', 
-    'Utilities', 'Healthcare'
-  ];
 
   return (
     <AnimatePresence>
@@ -200,6 +212,32 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, tr
                   ))}
                 </select>
               </div>
+
+              <AnimatePresence>
+                {formData.category === 'Other' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    <label className={cn("text-sm font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>Custom Category Name</label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.customCategory}
+                      onChange={e => setFormData({ ...formData, customCategory: e.target.value })}
+                      className={cn(
+                        "w-full border rounded-xl px-4 py-2.5 focus:ring-2 ring-primary transition-all outline-none",
+                        isDarkMode 
+                          ? "bg-zinc-900 text-white border-zinc-800 placeholder:text-zinc-600" 
+                          : "bg-slate-50 text-slate-900 border-slate-200 placeholder:text-slate-400"
+                      )}
+                      placeholder="e.g. Gift, Bonus, etc."
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="pt-4">
                 <button
