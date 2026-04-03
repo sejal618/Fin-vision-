@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { cn } from '../utils/cn';
@@ -30,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
     { id: 'insights', label: 'Insights', icon: PieChart },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   User, 
   Mail, 
@@ -8,16 +8,19 @@ import {
   Phone,
   Edit3,
   Camera,
-  ExternalLink
+  ExternalLink,
+  X,
+  Save
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { cn } from '../utils/cn';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const Profile: React.FC = () => {
   const { role, isDarkMode } = useFinance();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const userInfo = {
+  const [userInfo, setUserInfo] = useState({
     name: 'Sejal Shah',
     email: 'sejalshah681@gmail.com',
     role: role === 'admin' ? 'Administrator' : 'Viewer',
@@ -25,6 +28,13 @@ const Profile: React.FC = () => {
     location: 'Mumbai, India',
     phone: '+91 98765 43210',
     bio: 'Financial analyst and tech enthusiast. Passionate about data-driven decision making and personal finance management.'
+  });
+
+  const [tempInfo, setTempInfo] = useState(userInfo);
+
+  const handleSave = () => {
+    setUserInfo(tempInfo);
+    setIsEditModalOpen(false);
   };
 
   return (
@@ -34,7 +44,13 @@ const Profile: React.FC = () => {
           <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">User Profile</h2>
           <p className="text-muted-foreground mt-1">Manage your account settings and personal information.</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95">
+        <button 
+          onClick={() => {
+            setTempInfo(userInfo);
+            setIsEditModalOpen(true);
+          }}
+          className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+        >
           <Edit3 size={18} />
           Edit Profile
         </button>
@@ -162,6 +178,122 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "relative w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border",
+                isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-slate-200"
+              )}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-border/50">
+                <h3 className="text-xl font-bold">Edit Profile</h3>
+                <button 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-2 hover:bg-accent rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</label>
+                    <input 
+                      type="text"
+                      value={tempInfo.name}
+                      onChange={(e) => setTempInfo({ ...tempInfo, name: e.target.value })}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border transition-all outline-none focus:ring-2 ring-primary/20",
+                        isDarkMode ? "bg-zinc-800/50 border-zinc-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email Address</label>
+                    <input 
+                      type="email"
+                      value={tempInfo.email}
+                      onChange={(e) => setTempInfo({ ...tempInfo, email: e.target.value })}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border transition-all outline-none focus:ring-2 ring-primary/20",
+                        isDarkMode ? "bg-zinc-800/50 border-zinc-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</label>
+                    <input 
+                      type="text"
+                      value={tempInfo.phone}
+                      onChange={(e) => setTempInfo({ ...tempInfo, phone: e.target.value })}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border transition-all outline-none focus:ring-2 ring-primary/20",
+                        isDarkMode ? "bg-zinc-800/50 border-zinc-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Location</label>
+                    <input 
+                      type="text"
+                      value={tempInfo.location}
+                      onChange={(e) => setTempInfo({ ...tempInfo, location: e.target.value })}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border transition-all outline-none focus:ring-2 ring-primary/20",
+                        isDarkMode ? "bg-zinc-800/50 border-zinc-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bio</label>
+                  <textarea 
+                    rows={4}
+                    value={tempInfo.bio}
+                    onChange={(e) => setTempInfo({ ...tempInfo, bio: e.target.value })}
+                    className={cn(
+                      "w-full p-4 rounded-2xl border transition-all outline-none focus:ring-2 ring-primary/20 resize-none",
+                      isDarkMode ? "bg-zinc-800/50 border-zinc-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-border/50 flex gap-4">
+                <button 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 py-4 rounded-2xl font-bold border border-border hover:bg-accent transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSave}
+                  className="flex-1 py-4 rounded-2xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Save size={18} />
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
