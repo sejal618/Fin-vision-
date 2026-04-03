@@ -171,13 +171,26 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             <Menu size={24} />
           </button>
           
-          <div className="flex items-center gap-6 ml-auto">
+          <div 
+            className="flex items-center gap-6 ml-auto cursor-pointer group"
+            onClick={() => setActiveTab('profile')}
+          >
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold tracking-tight">Sejal Shah</p>
+              <p className={cn(
+                "text-sm font-bold tracking-tight transition-colors",
+                activeTab === 'profile' ? "text-primary" : "group-hover:text-primary"
+              )}>
+                Sejal Shah
+              </p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{role} Account</p>
             </div>
-            <div className="relative group cursor-pointer">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-blue-400 p-[2px] shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+            <div className="relative">
+              <div className={cn(
+                "w-11 h-11 rounded-2xl p-[2px] transition-all duration-300",
+                activeTab === 'profile' 
+                  ? "bg-primary shadow-xl shadow-primary/30 scale-110" 
+                  : "bg-gradient-to-tr from-primary to-blue-400 shadow-lg shadow-primary/20 group-hover:scale-105"
+              )}>
                 <div className="w-full h-full rounded-[14px] bg-card flex items-center justify-center text-primary font-bold text-sm">
                   SS
                 </div>

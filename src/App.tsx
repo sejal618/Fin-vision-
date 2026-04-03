@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
 import Insights from './components/Insights';
+import Profile from './components/Profile';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,6 +22,8 @@ export default function App() {
         return <Transactions />;
       case 'insights':
         return <Insights />;
+      case 'profile':
+        return <Profile />;
       default:
         return <Dashboard onViewAll={() => setActiveTab('transactions')} />;
     }
