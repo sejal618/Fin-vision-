@@ -52,7 +52,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
-  const { transactions, role, deleteTransaction } = useFinance();
+  const { transactions, role, deleteTransaction, isDarkMode } = useFinance();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -293,7 +293,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
             >
               {categories.map(cat => (
-                <option key={cat} value={cat} className="bg-background">{cat === 'all' ? 'All Categories' : cat}</option>
+                <option key={cat} value={cat} className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>{cat === 'all' ? 'All Categories' : cat}</option>
               ))}
             </select>
           </div>
@@ -309,10 +309,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               }}
               className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
             >
-              <option value="date-desc" className="bg-background">Newest First</option>
-              <option value="date-asc" className="bg-background">Oldest First</option>
-              <option value="amount-desc" className="bg-background">Highest Amount</option>
-              <option value="amount-asc" className="bg-background">Lowest Amount</option>
+              <option value="date-desc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Newest First</option>
+              <option value="date-asc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Oldest First</option>
+              <option value="amount-desc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Highest Amount</option>
+              <option value="amount-asc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Lowest Amount</option>
             </select>
           </div>
         </div>
@@ -399,8 +399,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               <p className="text-xs text-muted-foreground mt-0.5">Cash flow trend over time</p>
             </div>
             <select className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border-none focus:ring-2 ring-primary/20 transition-all cursor-pointer">
-              <option>Last 6 Months</option>
-              <option>Last Year</option>
+              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last 6 Months</option>
+              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last Year</option>
             </select>
           </div>
           <div className="h-[350px] w-full">
@@ -473,9 +473,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               <p className="text-xs text-muted-foreground mt-0.5">Spending by category</p>
             </div>
             <select className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border-none focus:ring-2 ring-primary/20 transition-all cursor-pointer outline-none">
-              <option>Last 6 Months</option>
-              <option>Last Year</option>
-              <option>All Time</option>
+              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last 6 Months</option>
+              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last Year</option>
+              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>All Time</option>
             </select>
           </div>
           <div className="h-[320px] w-full relative">

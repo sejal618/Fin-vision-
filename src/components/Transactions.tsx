@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import TransactionModal from './TransactionModal';
 
 const Transactions: React.FC = () => {
-  const { transactions, role, deleteTransaction } = useFinance();
+  const { transactions, role, deleteTransaction, isDarkMode } = useFinance();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -149,9 +149,9 @@ const Transactions: React.FC = () => {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as any)}
             >
-              <option value="all">All Types</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
+              <option value="all" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>All Types</option>
+              <option value="income" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Income</option>
+              <option value="expense" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Expense</option>
             </select>
           </div>
 
@@ -162,7 +162,7 @@ const Transactions: React.FC = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
               {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat} className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>{cat}</option>
               ))}
             </select>
           </div>
@@ -174,8 +174,8 @@ const Transactions: React.FC = () => {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
             >
-              <option value="date">Date</option>
-              <option value="amount">Amount</option>
+              <option value="date" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Date</option>
+              <option value="amount" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Amount</option>
             </select>
             <button 
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
