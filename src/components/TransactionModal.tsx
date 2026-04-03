@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useFinance } from '../context/FinanceContext';
 import { Transaction } from '../types';
 import { cn } from '../utils/cn';
+import CustomSelect from './ui/CustomSelect';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -197,20 +198,12 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, tr
 
               <div className="space-y-2">
                 <label className={cn("text-sm font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>Category</label>
-                <select
+                <CustomSelect
                   value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
-                  className={cn(
-                    "w-full border rounded-xl px-4 py-2.5 focus:ring-2 ring-primary transition-all cursor-pointer outline-none",
-                    isDarkMode 
-                      ? "bg-zinc-900 text-white border-zinc-800" 
-                      : "bg-slate-50 text-slate-900 border-slate-200"
-                  )}
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat} className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>{cat}</option>
-                  ))}
-                </select>
+                  onChange={val => setFormData({ ...formData, category: val })}
+                  options={categories.map(cat => ({ value: cat, label: cat }))}
+                  isDarkMode={isDarkMode}
+                />
               </div>
 
               <AnimatePresence>

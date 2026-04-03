@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import CustomSelect from './ui/CustomSelect';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -285,36 +286,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2 bg-card/40 backdrop-blur-md border border-border/50 px-3 py-2 rounded-2xl shadow-soft flex-1 lg:flex-none">
-            <Filter size={14} className="text-muted-foreground" />
-            <select 
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat} className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>{cat === 'all' ? 'All Categories' : cat}</option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            options={categories.map(cat => ({ 
+              value: cat, 
+              label: cat === 'all' ? 'All Categories' : cat 
+            }))}
+            icon={<Filter size={14} />}
+            isDarkMode={isDarkMode}
+            className="flex-1 lg:flex-none"
+          />
 
-          <div className="flex items-center gap-2 bg-card/40 backdrop-blur-md border border-border/50 px-3 py-2 rounded-2xl shadow-soft flex-1 lg:flex-none">
-            <ArrowUpDown size={14} className="text-muted-foreground" />
-            <select 
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [newSortBy, newSortOrder] = e.target.value.split('-') as [any, any];
-                setSortBy(newSortBy);
-                setSortOrder(newSortOrder);
-              }}
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer w-full"
-            >
-              <option value="date-desc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Newest First</option>
-              <option value="date-asc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Oldest First</option>
-              <option value="amount-desc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Highest Amount</option>
-              <option value="amount-asc" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Lowest Amount</option>
-            </select>
-          </div>
+          <CustomSelect
+            value={`${sortBy}-${sortOrder}`}
+            onChange={(val) => {
+              const [newSortBy, newSortOrder] = val.split('-') as [any, any];
+              setSortBy(newSortBy);
+              setSortOrder(newSortOrder);
+            }}
+            options={[
+              { value: 'date-desc', label: 'Newest First' },
+              { value: 'date-asc', label: 'Oldest First' },
+              { value: 'amount-desc', label: 'Highest Amount' },
+              { value: 'amount-asc', label: 'Lowest Amount' },
+            ]}
+            icon={<ArrowUpDown size={14} />}
+            isDarkMode={isDarkMode}
+            className="flex-1 lg:flex-none"
+          />
         </div>
       </div>
 
@@ -398,10 +398,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               <h3 className="text-xl font-bold">Balance Analytics</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Cash flow trend over time</p>
             </div>
-            <select className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border-none focus:ring-2 ring-primary/20 transition-all cursor-pointer">
-              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last 6 Months</option>
-              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last Year</option>
-            </select>
+            <CustomSelect
+              value="Last 6 Months"
+              onChange={() => {}}
+              options={[
+                { value: 'Last 6 Months', label: 'Last 6 Months' },
+                { value: 'Last Year', label: 'Last Year' },
+              ]}
+              isDarkMode={isDarkMode}
+              className="w-32"
+            />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -472,11 +478,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               <h3 className="text-xl font-bold">Category Distribution</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Spending by category</p>
             </div>
-            <select className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border-none focus:ring-2 ring-primary/20 transition-all cursor-pointer outline-none">
-              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last 6 Months</option>
-              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Last Year</option>
-              <option className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>All Time</option>
-            </select>
+            <CustomSelect
+              value="Last 6 Months"
+              onChange={() => {}}
+              options={[
+                { value: 'Last 6 Months', label: 'Last 6 Months' },
+                { value: 'Last Year', label: 'Last Year' },
+                { value: 'All Time', label: 'All Time' },
+              ]}
+              isDarkMode={isDarkMode}
+              className="w-32"
+            />
           </div>
           <div className="h-[320px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">

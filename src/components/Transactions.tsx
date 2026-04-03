@@ -17,6 +17,7 @@ import { format, parseISO } from 'date-fns';
 import { cn } from '../utils/cn';
 import { motion, AnimatePresence } from 'motion/react';
 import TransactionModal from './TransactionModal';
+import CustomSelect from './ui/CustomSelect';
 
 const Transactions: React.FC = () => {
   const { transactions, role, deleteTransaction, isDarkMode } = useFinance();
@@ -142,41 +143,42 @@ const Transactions: React.FC = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 bg-accent/30 px-4 py-2 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all">
-            <Filter size={16} className="text-muted-foreground" strokeWidth={2.5} />
-            <select 
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
-            >
-              <option value="all" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>All Types</option>
-              <option value="income" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Income</option>
-              <option value="expense" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Expense</option>
-            </select>
-          </div>
+          <CustomSelect
+            value={typeFilter}
+            onChange={(val) => setTypeFilter(val as any)}
+            options={[
+              { value: 'all', label: 'All Types' },
+              { value: 'income', label: 'Income' },
+              { value: 'expense', label: 'Expense' },
+            ]}
+            icon={<Filter size={16} strokeWidth={2.5} />}
+            isDarkMode={isDarkMode}
+            className="flex-1 sm:flex-none"
+          />
 
-          <div className="flex items-center gap-2 bg-accent/30 px-4 py-2 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all">
-            <select 
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer capitalize"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat} className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={categories.map(cat => ({ 
+              value: cat, 
+              label: cat === 'all' ? 'All Categories' : cat 
+            }))}
+            isDarkMode={isDarkMode}
+            className="flex-1 sm:flex-none"
+          />
 
-          <div className="flex items-center gap-3 bg-accent/30 px-4 py-2 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all">
+          <div className="flex items-center gap-3 bg-accent/30 px-4 py-2 rounded-2xl border border-transparent focus-within:border-primary/20 transition-all flex-1 sm:flex-none">
             <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Sort:</span>
-            <select 
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer"
+            <CustomSelect
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-            >
-              <option value="date" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Date</option>
-              <option value="amount" className={isDarkMode ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}>Amount</option>
-            </select>
+              onChange={(val) => setSortBy(val as any)}
+              options={[
+                { value: 'date', label: 'Date' },
+                { value: 'amount', label: 'Amount' },
+              ]}
+              isDarkMode={isDarkMode}
+              className="flex-1"
+            />
             <button 
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               className="p-1.5 hover:bg-accent rounded-lg transition-colors"
