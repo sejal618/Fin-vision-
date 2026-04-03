@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Transaction, UserRole, FinanceState } from '../types';
+import { Transaction, UserRole, FinanceState, UserProfile } from '../types';
 import { MOCK_TRANSACTIONS } from '../data/mockData';
 
 interface FinanceContextType extends FinanceState {
@@ -8,6 +8,7 @@ interface FinanceContextType extends FinanceState {
   deleteTransaction: (id: string) => void;
   setRole: (role: UserRole) => void;
   toggleDarkMode: () => void;
+  updateUser: (user: Partial<UserProfile>) => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -28,6 +29,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved === 'dark';
   });
 
+  const [user, setUser] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('finvision_user');
+    return saved ? JSON.parse(saved) : {
+      name: 'Sejal Shah',
+      email: 'sejalshah681@gmail.com',
+      joined: 'January 2024',
+      location: 'Mumbai, India',
+      phone: '+91 98765 43210',
+      bio: 'Financial analyst and tech enthusiast. Passionate about data-driven decision making and personal finance management.',
+      profilePic: null
+    };
+  });
+
   useEffect(() => {
     localStorage.setItem('finvision_transactions', JSON.stringify(transactions));
   }, [transactions]);
@@ -35,6 +49,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     localStorage.setItem('finvision_role', role);
   }, [role]);
+
+  useEffect(() => {
+    localStorage.setItem('finvision_user', JSON.stringify(user));
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem('finvision_theme', isDarkMode ? 'dark' : 'light');
@@ -60,16 +78,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
+  const updateUser = (updatedFields: Partial<UserProfile>) => {
+    setUser(prev => ({ ...prev, ...updatedFields }));
+  };
+
   return (
     <FinanceContext.Provider value={{ 
       transactions, 
       role, 
       isDarkMode, 
+      user,
       addTransaction, 
       updateTransaction, 
       deleteTransaction, 
       setRole, 
-      toggleDarkMode 
+      toggleDarkMode,
+      updateUser
     }}>
       {children}
     </FinanceContext.Provider>

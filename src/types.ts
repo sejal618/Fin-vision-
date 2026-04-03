@@ -11,10 +11,21 @@ export interface Transaction {
 
 export type UserRole = 'viewer' | 'admin';
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  joined: string;
+  location: string;
+  phone: string;
+  bio: string;
+  profilePic: string | null;
+}
+
 export interface FinanceState {
   transactions: Transaction[];
   role: UserRole;
   isDarkMode: boolean;
+  user: UserProfile;
 }
 
 export interface SpendingCategory {

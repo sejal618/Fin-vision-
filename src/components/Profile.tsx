@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, 
   Mail, 
@@ -10,30 +10,79 @@ import {
   Camera,
   ExternalLink,
   X,
-  Save
+  Save,
+  RotateCcw,
+  Check
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { cn } from '../utils/cn';
 import { motion, AnimatePresence } from 'motion/react';
 
 const Profile: React.FC = () => {
-  const { role, isDarkMode } = useFinance();
+  const { role, isDarkMode, user, updateUser } = useFinance();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const [userInfo, setUserInfo] = useState({
-    name: 'Sejal Shah',
-    email: 'sejalshah681@gmail.com',
-    role: role === 'admin' ? 'Administrator' : 'Viewer',
-    joined: 'January 2024',
-    location: 'Mumbai, India',
-    phone: '+91 98765 43210',
-    bio: 'Financial analyst and tech enthusiast. Passionate about data-driven decision making and personal finance management.'
-  });
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+      }
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      alert("Could not access camera. Please ensure you have given permission.");
+      setIsCameraOpen(false);
+    }
+  };
 
-  const [tempInfo, setTempInfo] = useState(userInfo);
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/png');
+        setCapturedImage(dataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  const saveProfilePic = () => {
+    if (capturedImage) {
+      updateUser({ profilePic: capturedImage });
+      setIsCameraOpen(false);
+      setCapturedImage(null);
+    }
+  };
+
+  useEffect(() => {
+    if (isCameraOpen && !capturedImage) {
+      startCamera();
+    }
+    return () => stopCamera();
+  }, [isCameraOpen, capturedImage]);
+
+  const [tempInfo, setTempInfo] = useState(user);
 
   const handleSave = () => {
-    setUserInfo(tempInfo);
+    updateUser(tempInfo);
     setIsEditModalOpen(false);
   };
 
@@ -46,7 +95,7 @@ const Profile: React.FC = () => {
         </div>
         <button 
           onClick={() => {
-            setTempInfo(userInfo);
+            setTempInfo(user);
             setIsEditModalOpen(true);
           }}
           className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
@@ -61,35 +110,42 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft flex flex-col items-center text-center">
             <div className="relative group mb-6">
-              <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold text-4xl shadow-xl shadow-primary/20">
-                SS
+              <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold text-4xl shadow-xl shadow-primary/20 overflow-hidden">
+                {user.profilePic ? (
+                  <img src={user.profilePic} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  "SS"
+                )}
               </div>
-              <button className="absolute bottom-0 right-0 p-2.5 bg-background border border-border rounded-xl shadow-lg text-muted-foreground hover:text-primary transition-colors">
+              <button 
+                onClick={() => setIsCameraOpen(true)}
+                className="absolute bottom-0 right-0 p-2.5 bg-background border border-border rounded-xl shadow-lg text-muted-foreground hover:text-primary transition-colors"
+              >
                 <Camera size={18} />
               </button>
             </div>
             
-            <h3 className="text-2xl font-bold tracking-tight">{userInfo.name}</h3>
-            <p className="text-muted-foreground font-medium mb-6">{userInfo.email}</p>
+            <h3 className="text-2xl font-bold tracking-tight">{user.name}</h3>
+            <p className="text-muted-foreground font-medium mb-6">{user.email}</p>
             
             <div className={cn(
               "flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-8",
               role === 'admin' ? "bg-success/15 text-success border border-success/10" : "bg-warning/15 text-warning border border-warning/10"
             )}>
               <Shield size={14} />
-              {userInfo.role}
+              {role === 'admin' ? 'Administrator' : 'Viewer'}
             </div>
 
             <div className="w-full space-y-4 pt-6 border-t border-border/50">
               <div className="flex items-center gap-3 text-sm">
                 <Calendar size={16} className="text-muted-foreground" />
                 <span className="text-muted-foreground">Joined:</span>
-                <span className="font-semibold ml-auto">{userInfo.joined}</span>
+                <span className="font-semibold ml-auto">{user.joined}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin size={16} className="text-muted-foreground" />
                 <span className="text-muted-foreground">Location:</span>
-                <span className="font-semibold ml-auto">{userInfo.location}</span>
+                <span className="font-semibold ml-auto">{user.location}</span>
               </div>
             </div>
           </div>
@@ -120,28 +176,28 @@ const Profile: React.FC = () => {
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</label>
                 <div className="flex items-center gap-3 p-4 bg-accent/30 rounded-2xl border border-transparent">
                   <User size={18} className="text-primary" />
-                  <span className="font-semibold">{userInfo.name}</span>
+                  <span className="font-semibold">{user.name}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email Address</label>
                 <div className="flex items-center gap-3 p-4 bg-accent/30 rounded-2xl border border-transparent">
                   <Mail size={18} className="text-primary" />
-                  <span className="font-semibold">{userInfo.email}</span>
+                  <span className="font-semibold">{user.email}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</label>
                 <div className="flex items-center gap-3 p-4 bg-accent/30 rounded-2xl border border-transparent">
                   <Phone size={18} className="text-primary" />
-                  <span className="font-semibold">{userInfo.phone}</span>
+                  <span className="font-semibold">{user.phone}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Account Type</label>
                 <div className="flex items-center gap-3 p-4 bg-accent/30 rounded-2xl border border-transparent">
                   <Shield size={18} className="text-primary" />
-                  <span className="font-semibold">{userInfo.role}</span>
+                  <span className="font-semibold">{role === 'admin' ? 'Administrator' : 'Viewer'}</span>
                 </div>
               </div>
             </div>
@@ -149,7 +205,7 @@ const Profile: React.FC = () => {
             <div className="mt-8 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bio</label>
               <div className="p-6 bg-accent/30 rounded-2xl border border-transparent leading-relaxed text-muted-foreground">
-                {userInfo.bio}
+                {user.bio}
               </div>
             </div>
           </div>
@@ -287,6 +343,91 @@ const Profile: React.FC = () => {
                   <Save size={18} />
                   Save Changes
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Camera Modal */}
+      <AnimatePresence>
+        {isCameraOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsCameraOpen(false);
+                setCapturedImage(null);
+              }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border",
+                isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-slate-200"
+              )}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-border/50">
+                <h3 className="text-xl font-bold">Take Profile Photo</h3>
+                <button 
+                  onClick={() => {
+                    setIsCameraOpen(false);
+                    setCapturedImage(null);
+                  }}
+                  className="p-2 hover:bg-accent rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="relative aspect-square rounded-2xl overflow-hidden bg-black border border-border/50">
+                  {!capturedImage ? (
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      className="w-full h-full object-cover mirror"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                  ) : (
+                    <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+                  )}
+                  <canvas ref={canvasRef} className="hidden" />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-border/50 flex gap-4">
+                {!capturedImage ? (
+                  <button 
+                    onClick={capturePhoto}
+                    className="w-full py-4 rounded-2xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <div className="w-4 h-4 rounded-full border-2 border-current" />
+                    Capture Photo
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setCapturedImage(null)}
+                      className="flex-1 py-4 rounded-2xl font-bold border border-border hover:bg-accent transition-all flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw size={18} />
+                      Retake
+                    </button>
+                    <button 
+                      onClick={saveProfilePic}
+                      className="flex-1 py-4 rounded-2xl font-bold bg-success text-white shadow-lg shadow-success/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <Check size={18} />
+                      Use Photo
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

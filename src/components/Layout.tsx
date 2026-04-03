@@ -24,7 +24,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
-  const { isDarkMode, toggleDarkMode, role, setRole } = useFinance();
+  const { isDarkMode, toggleDarkMode, role, setRole, user } = useFinance();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
@@ -182,18 +182,22 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
                 "text-sm font-bold tracking-tight transition-colors",
                 activeTab === 'profile' ? "text-primary" : "group-hover:text-primary"
               )}>
-                Sejal Shah
+                {user.name}
               </p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{role} Account</p>
             </div>
             <div className="relative">
               <div className={cn(
-                "w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm transition-all duration-300",
+                "w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm transition-all duration-300 overflow-hidden",
                 activeTab === 'profile' 
                   ? "bg-primary shadow-xl shadow-primary/30 scale-110" 
                   : "bg-gradient-to-tr from-primary to-blue-400 shadow-lg shadow-primary/20 group-hover:scale-105"
               )}>
-                SS
+                {user.profilePic ? (
+                  <img src={user.profilePic} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  user.name.split(' ').map(n => n[0]).join('')
+                )}
               </div>
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-success border-2 border-card rounded-full shadow-sm" />
             </div>
