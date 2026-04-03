@@ -128,7 +128,7 @@ const Profile: React.FC = () => {
                 {user.profilePic && (
                   <button 
                     onClick={deleteProfilePic}
-                    className="p-1.5 bg-background border border-border rounded-lg shadow-md text-danger hover:bg-danger/10 transition-all active:scale-95"
+                    className="p-1.5 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-md text-danger hover:bg-danger/20 transition-all active:scale-95"
                     title="Delete Photo"
                   >
                     <Trash2 size={14} />
@@ -136,7 +136,7 @@ const Profile: React.FC = () => {
                 )}
                 <button 
                   onClick={() => setIsCameraOpen(true)}
-                  className="p-1.5 bg-background border border-border rounded-lg shadow-md text-muted-foreground hover:text-primary transition-all active:scale-95"
+                  className="p-1.5 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-md text-muted-foreground hover:text-primary transition-all active:scale-95"
                   title="Take Photo"
                 >
                   <Camera size={14} />
