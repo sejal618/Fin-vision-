@@ -61,10 +61,8 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft flex flex-col items-center text-center">
             <div className="relative group mb-6">
-              <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-primary to-blue-400 p-[3px] shadow-xl shadow-primary/20">
-                <div className="w-full h-full rounded-[21px] bg-card flex items-center justify-center text-primary font-bold text-4xl">
-                  SS
-                </div>
+              <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold text-4xl shadow-xl shadow-primary/20">
+                SS
               </div>
               <button className="absolute bottom-0 right-0 p-2.5 bg-background border border-border rounded-xl shadow-lg text-muted-foreground hover:text-primary transition-colors">
                 <Camera size={18} />

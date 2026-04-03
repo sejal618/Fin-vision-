@@ -188,14 +188,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
             </div>
             <div className="relative">
               <div className={cn(
-                "w-11 h-11 rounded-2xl p-[2px] transition-all duration-300",
+                "w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm transition-all duration-300",
                 activeTab === 'profile' 
                   ? "bg-primary shadow-xl shadow-primary/30 scale-110" 
                   : "bg-gradient-to-tr from-primary to-blue-400 shadow-lg shadow-primary/20 group-hover:scale-105"
               )}>
-                <div className="w-full h-full rounded-[14px] bg-card flex items-center justify-center text-primary font-bold text-sm">
-                  SS
-                </div>
+                SS
               </div>
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-success border-2 border-card rounded-full shadow-sm" />
             </div>
