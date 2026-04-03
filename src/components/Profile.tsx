@@ -12,7 +12,8 @@ import {
   X,
   Save,
   RotateCcw,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { cn } from '../utils/cn';
@@ -72,6 +73,12 @@ const Profile: React.FC = () => {
     }
   };
 
+  const deleteProfilePic = () => {
+    updateUser({ profilePic: null });
+    setIsCameraOpen(false);
+    setCapturedImage(null);
+  };
+
   useEffect(() => {
     if (isCameraOpen && !capturedImage) {
       startCamera();
@@ -114,15 +121,27 @@ const Profile: React.FC = () => {
                 {user.profilePic ? (
                   <img src={user.profilePic} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                  "SS"
+                  user.name.split(' ').map(n => n[0]).join('')
                 )}
               </div>
-              <button 
-                onClick={() => setIsCameraOpen(true)}
-                className="absolute bottom-0 right-0 p-2.5 bg-background border border-border rounded-xl shadow-lg text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Camera size={18} />
-              </button>
+              <div className="absolute -bottom-1 -right-1 flex gap-1.5">
+                {user.profilePic && (
+                  <button 
+                    onClick={deleteProfilePic}
+                    className="p-1.5 bg-background border border-border rounded-lg shadow-md text-danger hover:bg-danger/10 transition-all active:scale-95"
+                    title="Delete Photo"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsCameraOpen(true)}
+                  className="p-1.5 bg-background border border-border rounded-lg shadow-md text-muted-foreground hover:text-primary transition-all active:scale-95"
+                  title="Take Photo"
+                >
+                  <Camera size={14} />
+                </button>
+              </div>
             </div>
             
             <h3 className="text-2xl font-bold tracking-tight">{user.name}</h3>
@@ -401,15 +420,29 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-border/50 flex gap-4">
+              <div className="p-6 border-t border-border/50 flex flex-col gap-4">
                 {!capturedImage ? (
-                  <button 
-                    onClick={capturePhoto}
-                    className="w-full py-4 rounded-2xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <div className="w-4 h-4 rounded-full border-2 border-current" />
-                    Capture Photo
-                  </button>
+                  <div className="flex gap-4">
+                    {user.profilePic && (
+                      <button 
+                        onClick={deleteProfilePic}
+                        className="flex-1 py-4 rounded-2xl font-bold bg-danger/10 text-danger hover:bg-danger/20 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={18} />
+                        Delete
+                      </button>
+                    )}
+                    <button 
+                      onClick={capturePhoto}
+                      className={cn(
+                        "py-4 rounded-2xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2",
+                        user.profilePic ? "flex-1" : "w-full"
+                      )}
+                    >
+                      <div className="w-4 h-4 rounded-full border-2 border-current" />
+                      Capture Photo
+                    </button>
+                  </div>
                 ) : (
                   <>
                     <button 
