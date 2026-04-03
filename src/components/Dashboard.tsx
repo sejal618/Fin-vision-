@@ -67,7 +67,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
 
   const categories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category));
-    return ['all', ...Array.from(cats)].sort();
+    // Filter out the unwanted string and ensure 'Other' is available
+    const filteredCats = Array.from(cats).filter(c => c !== "6WS7T1`8YTW`87W`" && c !== "Other");
+    return ['all', ...filteredCats.sort(), 'Other'];
   }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
