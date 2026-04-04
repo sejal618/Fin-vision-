@@ -215,7 +215,7 @@ const Transactions: React.FC = () => {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-5 shadow-soft flex flex-col lg:flex-row gap-5">
+      <div className="relative z-40 bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-5 shadow-soft flex flex-col lg:flex-row gap-5">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} strokeWidth={2.5} />
           <input 
@@ -227,7 +227,7 @@ const Transactions: React.FC = () => {
           />
         </div>
         
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="relative z-50 flex flex-wrap items-center gap-4">
           <CustomSelect
             value={typeFilter}
             onChange={(val) => setTypeFilter(val as any)}

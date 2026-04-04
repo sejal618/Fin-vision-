@@ -351,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        <div className="relative z-40 flex flex-wrap items-center gap-3 w-full lg:w-auto">
           <CustomSelect
             value={selectedCategory}
             onChange={setSelectedCategory}
