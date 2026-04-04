@@ -42,7 +42,9 @@ import {
   isSameMonth,
   isSameYear,
   startOfDay,
-  endOfDay
+  endOfDay,
+  eachDayOfInterval,
+  isSameDay
 } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils/cn';
@@ -53,7 +55,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
-  const { transactions, role, deleteTransaction, isDarkMode } = useFinance();
+  const { transactions, role, deleteTransaction, isDarkMode, user } = useFinance();
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -181,7 +183,71 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
   }, [filteredTransactions]);
 
   const trendData = useMemo(() => {
-    const last6Months = Array.from({ length: 6 }).map((_, i) => {
+    const now = new Date();
+    
+    if (dateRangeType === 'month') {
+      // Daily trend for current month
+      const start = startOfMonth(now);
+      const end = endOfMonth(now);
+      const days = eachDayOfInterval({ start, end });
+      return days.map(day => {
+        const dayTransactions = transactions.filter(t => isSameDay(parseISO(t.date), day));
+        const income = dayTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const expenses = dayTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        return { 
+          name: format(day, 'dd'), 
+          fullDate: format(day, 'MMM dd, yyyy'),
+          income, 
+          expenses, 
+          balance: income - expenses 
+        };
+      });
+    }
+    
+    if (dateRangeType === 'year') {
+      // Monthly trend for current year
+      return Array.from({ length: 12 }).map((_, i) => {
+        const date = new Date(now.getFullYear(), i, 1);
+        const start = startOfMonth(date);
+        const end = endOfMonth(date);
+        const monthTransactions = transactions.filter(t => 
+          isWithinInterval(parseISO(t.date), { start, end })
+        );
+        const income = monthTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const expenses = monthTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        return { 
+          name: format(date, 'MMM'), 
+          fullDate: format(date, 'MMMM yyyy'),
+          income, 
+          expenses, 
+          balance: income - expenses 
+        };
+      });
+    }
+
+    if (dateRangeType === 'custom') {
+      // Daily trend for custom range
+      const start = startOfDay(parseISO(customStartDate));
+      const end = endOfDay(parseISO(customEndDate));
+      const days = eachDayOfInterval({ start, end });
+      
+      // If range is too long, maybe group by week? For now just daily
+      return days.map(day => {
+        const dayTransactions = transactions.filter(t => isSameDay(parseISO(t.date), day));
+        const income = dayTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const expenses = dayTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        return { 
+          name: format(day, 'dd'), 
+          fullDate: format(day, 'MMM dd, yyyy'),
+          income, 
+          expenses, 
+          balance: income - expenses 
+        };
+      });
+    }
+
+    // Default: Last 6 months for "All Time"
+    return Array.from({ length: 6 }).map((_, i) => {
       const date = subMonths(new Date(), 5 - i);
       const monthStr = format(date, 'MMM');
       const start = startOfMonth(date);
@@ -201,13 +267,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
 
       return {
         name: monthStr,
+        fullDate: format(date, 'MMMM yyyy'),
         income,
         expenses,
         balance: income - expenses
       };
     });
-    return last6Months;
-  }, [transactions]);
+  }, [transactions, dateRangeType, customStartDate, customEndDate]);
 
   const categoryData = useMemo(() => {
     const categories: Record<string, number> = {};
@@ -229,7 +295,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Financial Intelligence</h2>
-          <p className="text-muted-foreground mt-1">Welcome back, Sejal. Here's your real-time financial performance.</p>
+          <p className="text-muted-foreground mt-1">Welcome back, {user.name.split(' ')[0]}. Here's your real-time financial performance.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {role === 'admin' && (
@@ -391,23 +457,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft focus:outline-none outline-none">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-3xl p-8 shadow-soft focus:outline-none outline-none">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl font-bold">Balance Analytics</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Cash flow trend over time</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {dateRangeType === 'all' ? 'Last 6 months trend' : 
+                 dateRangeType === 'month' ? 'Daily trend for this month' :
+                 dateRangeType === 'year' ? 'Monthly trend for this year' :
+                 'Custom range trend'}
+              </p>
             </div>
-            <CustomSelect
-              value="Last 6 Months"
-              onChange={() => {}}
-              options={[
-                { value: 'Last 6 Months', label: 'Last 6 Months' },
-                { value: 'Last Year', label: 'Last Year' },
-              ]}
-              isDarkMode={isDarkMode}
-              className="w-32"
-            />
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -478,21 +539,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               <h3 className="text-xl font-bold">Category Distribution</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Spending by category</p>
             </div>
-            <CustomSelect
-              value="Last 6 Months"
-              onChange={() => {}}
-              options={[
-                { value: 'Last 6 Months', label: 'Last 6 Months' },
-                { value: 'Last Year', label: 'Last Year' },
-                { value: 'All Time', label: 'All Time' },
-              ]}
-              isDarkMode={isDarkMode}
-              className="w-32"
-            />
           </div>
           <div className="h-[320px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ left: 40, right: 40 }}>
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={renderActiveShape}
@@ -569,56 +619,72 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAll }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {filteredTransactions.slice(0, 5).map((tx) => (
-                <tr key={tx.id} className="hover:bg-accent/30 transition-colors group">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110",
-                        tx.type === 'income' ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
-                      )}>
-                        {tx.type === 'income' ? <ArrowUpRight size={18} strokeWidth={2.5} /> : <ArrowDownRight size={18} strokeWidth={2.5} />}
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.slice(0, 5).map((tx) => (
+                  <tr key={tx.id} className="hover:bg-accent/30 transition-colors group">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110",
+                          tx.type === 'income' ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
+                        )}>
+                          {tx.type === 'income' ? <ArrowUpRight size={18} strokeWidth={2.5} /> : <ArrowDownRight size={18} strokeWidth={2.5} />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm tracking-tight">{tx.description}</p>
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{tx.type}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className="px-3 py-1 rounded-lg bg-accent/50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {tx.category}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5 text-sm font-semibold text-muted-foreground">{format(parseISO(tx.date), 'MMM dd, yyyy')}</td>
+                    <td className={cn(
+                      "px-8 py-5 text-sm font-black text-right",
+                      tx.type === 'income' ? "text-success" : "text-danger"
+                    )}>
+                      {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
+                    </td>
+                    {role === 'admin' && (
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                          <button 
+                            onClick={() => handleEdit(tx)}
+                            className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                            title="Edit Transaction"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => deleteTransaction(tx.id)}
+                            className="p-2 rounded-lg hover:bg-danger/10 text-danger transition-colors"
+                            title="Delete Transaction"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={role === 'admin' ? 5 : 4} className="px-8 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3 text-muted-foreground/50">
+                      <div className="w-12 h-12 rounded-2xl bg-muted/20 flex items-center justify-center">
+                        <Filter size={24} strokeWidth={1.5} />
                       </div>
                       <div>
-                        <p className="font-bold text-sm tracking-tight">{tx.description}</p>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{tx.type}</p>
+                        <p className="text-sm font-bold text-foreground/70">No transactions in this period</p>
+                        <p className="text-[10px] font-medium">Try changing your date filter or category.</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5">
-                    <span className="px-3 py-1 rounded-lg bg-accent/50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {tx.category}
-                    </span>
-                  </td>
-                  <td className="px-8 py-5 text-sm font-semibold text-muted-foreground">{format(parseISO(tx.date), 'MMM dd, yyyy')}</td>
-                  <td className={cn(
-                    "px-8 py-5 text-sm font-black text-right",
-                    tx.type === 'income' ? "text-success" : "text-danger"
-                  )}>
-                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
-                  </td>
-                  {role === 'admin' && (
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                        <button 
-                          onClick={() => handleEdit(tx)}
-                          className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
-                          title="Edit Transaction"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => deleteTransaction(tx.id)}
-                          className="p-2 rounded-lg hover:bg-danger/10 text-danger transition-colors"
-                          title="Delete Transaction"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -13,14 +13,35 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
-import { format, parseISO } from 'date-fns';
+import { 
+  format, 
+  parseISO, 
+  isWithinInterval, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfYear, 
+  endOfYear, 
+  startOfDay, 
+  endOfDay 
+} from 'date-fns';
 import { cn } from '../utils/cn';
 import { motion, AnimatePresence } from 'motion/react';
 import TransactionModal from './TransactionModal';
 import CustomSelect from './ui/CustomSelect';
 
 const Transactions: React.FC = () => {
-  const { transactions, role, deleteTransaction, isDarkMode } = useFinance();
+  const { 
+    transactions, 
+    role, 
+    deleteTransaction, 
+    isDarkMode,
+    dateRangeType,
+    setDateRangeType,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate
+  } = useFinance();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -40,13 +61,36 @@ const Transactions: React.FC = () => {
   }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
+    const now = new Date();
     return transactions
       .filter(t => {
         const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             t.category.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'all' || t.type === typeFilter;
         const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
-        return matchesSearch && matchesType && matchesCategory;
+        
+        // Date Filtering
+        let matchesDate = true;
+        const txDate = parseISO(t.date);
+        
+        if (dateRangeType === 'month') {
+          matchesDate = isWithinInterval(txDate, {
+            start: startOfMonth(now),
+            end: endOfMonth(now)
+          });
+        } else if (dateRangeType === 'year') {
+          matchesDate = isWithinInterval(txDate, {
+            start: startOfYear(now),
+            end: endOfYear(now)
+          });
+        } else if (dateRangeType === 'custom') {
+          matchesDate = isWithinInterval(txDate, {
+            start: startOfDay(parseISO(customStartDate)),
+            end: endOfDay(parseISO(customEndDate))
+          });
+        }
+
+        return matchesSearch && matchesType && matchesCategory && matchesDate;
       })
       .sort((a, b) => {
         if (sortBy === 'date') {
@@ -127,6 +171,47 @@ const Transactions: React.FC = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Date Range Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        {[
+          { id: 'all', label: 'All Time' },
+          { id: 'month', label: 'This Month' },
+          { id: 'year', label: 'This Year' },
+          { id: 'custom', label: 'Custom' },
+        ].map((type) => (
+          <button
+            key={type.id}
+            onClick={() => setDateRangeType(type.id as any)}
+            className={cn(
+              "px-6 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-soft",
+              dateRangeType === type.id 
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105" 
+                : "bg-card/40 backdrop-blur-md border border-border/50 hover:bg-accent/50"
+            )}
+          >
+            {type.label}
+          </button>
+        ))}
+
+        {dateRangeType === 'custom' && (
+          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-300">
+            <input 
+              type="date" 
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="bg-card/40 backdrop-blur-md border border-border/50 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 ring-primary/20 outline-none"
+            />
+            <span className="text-muted-foreground font-bold text-xs">to</span>
+            <input 
+              type="date" 
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="bg-card/40 backdrop-blur-md border border-border/50 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 ring-primary/20 outline-none"
+            />
+          </div>
+        )}
       </div>
 
       {/* Filters Bar */}

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Transaction, UserRole, FinanceState, UserProfile } from '../types';
 import { MOCK_TRANSACTIONS } from '../data/mockData';
+import { format, startOfMonth } from 'date-fns';
 
 interface FinanceContextType extends FinanceState {
   addTransaction: (tx: Omit<Transaction, 'id'>) => void;
@@ -9,6 +10,12 @@ interface FinanceContextType extends FinanceState {
   setRole: (role: UserRole) => void;
   toggleDarkMode: () => void;
   updateUser: (user: Partial<UserProfile>) => void;
+  dateRangeType: 'all' | 'month' | 'year' | 'custom';
+  setDateRangeType: (type: 'all' | 'month' | 'year' | 'custom') => void;
+  customStartDate: string;
+  setCustomStartDate: (date: string) => void;
+  customEndDate: string;
+  setCustomEndDate: (date: string) => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -28,6 +35,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const saved = localStorage.getItem('finvision_theme');
     return saved === 'dark';
   });
+
+  const [dateRangeType, setDateRangeType] = useState<'all' | 'month' | 'year' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const [user, setUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('finvision_user');
@@ -88,6 +99,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       role, 
       isDarkMode, 
       user,
+      dateRangeType,
+      setDateRangeType,
+      customStartDate,
+      setCustomStartDate,
+      customEndDate,
+      setCustomEndDate,
       addTransaction, 
       updateTransaction, 
       deleteTransaction, 
